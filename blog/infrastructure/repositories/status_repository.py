@@ -14,8 +14,8 @@ class SqlAlchemyStatusRepository(StatusRepository):
 
     async def list_statuses(self) -> list[PostStatus]:
         result = await self._session.execute(select(PostStatusModel))
-        return [PostStatus(id=UUID(m.id), name=m.name) for m in result.scalars().all()]
+        return [PostStatus(id=m.id, name=m.name) for m in result.scalars().all()]
 
     async def get_by_status_id(self, status_id: UUID) -> PostStatus | None:
-        model = await self._session.get(PostStatusModel, str(status_id))
-        return PostStatus(id=UUID(model.id), name=model.name) if model else None
+        model = await self._session.get(PostStatusModel, status_id)
+        return PostStatus(id=model.id, name=model.name) if model else None

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from datetime import date, datetime
+from uuid import UUID
 
 from sqlalchemy import (
     BOOLEAN,
@@ -15,6 +16,8 @@ from sqlalchemy import (
 )
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 
+from core.database.types import BinaryUUID
+
 
 class Base(DeclarativeBase):
     pass
@@ -23,8 +26,10 @@ class Base(DeclarativeBase):
 class ResumeModel(Base):
     __tablename__ = "resumes"
 
-    id: Mapped[str] = mapped_column(VARCHAR(36), primary_key=True)
-    user_id: Mapped[str] = mapped_column(VARCHAR(36), nullable=False, index=True)
+    id: Mapped[UUID] = mapped_column(BinaryUUID(), primary_key=True)
+    user_id: Mapped[UUID] = mapped_column(
+        BinaryUUID(), ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True
+    )
     tagline: Mapped[str | None] = mapped_column(VARCHAR(500), nullable=True)
     is_active: Mapped[bool] = mapped_column(BOOLEAN, nullable=False, default=False)
     created_at: Mapped[datetime] = mapped_column(
@@ -50,9 +55,9 @@ class ResumeModel(Base):
 class WorkExperienceModel(Base):
     __tablename__ = "work_experience"
 
-    id: Mapped[str] = mapped_column(VARCHAR(36), primary_key=True)
-    resume_id: Mapped[str] = mapped_column(
-        VARCHAR(36), ForeignKey("resumes.id", ondelete="CASCADE"), nullable=False, index=True
+    id: Mapped[UUID] = mapped_column(BinaryUUID(), primary_key=True)
+    resume_id: Mapped[UUID] = mapped_column(
+        BinaryUUID(), ForeignKey("resumes.id", ondelete="CASCADE"), nullable=False, index=True
     )
     company: Mapped[str] = mapped_column(VARCHAR(255), nullable=False)
     role: Mapped[str] = mapped_column(VARCHAR(255), nullable=False)
@@ -79,9 +84,9 @@ class WorkExperienceModel(Base):
 class WorkExperienceBulletModel(Base):
     __tablename__ = "work_experience_bullets"
 
-    id: Mapped[str] = mapped_column(VARCHAR(36), primary_key=True)
-    experience_id: Mapped[str] = mapped_column(
-        VARCHAR(36),
+    id: Mapped[UUID] = mapped_column(BinaryUUID(), primary_key=True)
+    experience_id: Mapped[UUID] = mapped_column(
+        BinaryUUID(),
         ForeignKey("work_experience.id", ondelete="CASCADE"),
         nullable=False,
         index=True,
@@ -97,9 +102,9 @@ class WorkExperienceBulletModel(Base):
 class EducationModel(Base):
     __tablename__ = "education"
 
-    id: Mapped[str] = mapped_column(VARCHAR(36), primary_key=True)
-    resume_id: Mapped[str] = mapped_column(
-        VARCHAR(36), ForeignKey("resumes.id", ondelete="CASCADE"), nullable=False, index=True
+    id: Mapped[UUID] = mapped_column(BinaryUUID(), primary_key=True)
+    resume_id: Mapped[UUID] = mapped_column(
+        BinaryUUID(), ForeignKey("resumes.id", ondelete="CASCADE"), nullable=False, index=True
     )
     institution: Mapped[str] = mapped_column(VARCHAR(255), nullable=False)
     degree: Mapped[str] = mapped_column(VARCHAR(255), nullable=False)
@@ -116,9 +121,9 @@ class EducationModel(Base):
 class ProjectModel(Base):
     __tablename__ = "projects"
 
-    id: Mapped[str] = mapped_column(VARCHAR(36), primary_key=True)
-    resume_id: Mapped[str] = mapped_column(
-        VARCHAR(36), ForeignKey("resumes.id", ondelete="CASCADE"), nullable=False, index=True
+    id: Mapped[UUID] = mapped_column(BinaryUUID(), primary_key=True)
+    resume_id: Mapped[UUID] = mapped_column(
+        BinaryUUID(), ForeignKey("resumes.id", ondelete="CASCADE"), nullable=False, index=True
     )
     name: Mapped[str] = mapped_column(VARCHAR(255), nullable=False)
     description: Mapped[str | None] = mapped_column(TEXT, nullable=True)
@@ -146,7 +151,7 @@ class ProjectModel(Base):
 class TechnologyModel(Base):
     __tablename__ = "technologies"
 
-    id: Mapped[str] = mapped_column(VARCHAR(36), primary_key=True)
+    id: Mapped[UUID] = mapped_column(BinaryUUID(), primary_key=True)
     name: Mapped[str] = mapped_column(VARCHAR(100), nullable=False, unique=True)
 
     project_technologies: Mapped[list[ProjectTechnologyModel]] = relationship(
@@ -157,11 +162,11 @@ class TechnologyModel(Base):
 class ProjectTechnologyModel(Base):
     __tablename__ = "project_technologies"
 
-    project_id: Mapped[str] = mapped_column(
-        VARCHAR(36), ForeignKey("projects.id", ondelete="CASCADE"), primary_key=True
+    project_id: Mapped[UUID] = mapped_column(
+        BinaryUUID(), ForeignKey("projects.id", ondelete="CASCADE"), primary_key=True
     )
-    technology_id: Mapped[str] = mapped_column(
-        VARCHAR(36), ForeignKey("technologies.id", ondelete="CASCADE"), primary_key=True
+    technology_id: Mapped[UUID] = mapped_column(
+        BinaryUUID(), ForeignKey("technologies.id", ondelete="CASCADE"), primary_key=True
     )
     sort_order: Mapped[int] = mapped_column(SMALLINT, nullable=False, default=0)
 
@@ -172,7 +177,7 @@ class ProjectTechnologyModel(Base):
 class SkillCategoryModel(Base):
     __tablename__ = "skill_categories"
 
-    id: Mapped[str] = mapped_column(VARCHAR(36), primary_key=True)
+    id: Mapped[UUID] = mapped_column(BinaryUUID(), primary_key=True)
     name: Mapped[str] = mapped_column(VARCHAR(100), nullable=False, unique=True)
     sort_order: Mapped[int] = mapped_column(SMALLINT, nullable=False, default=0)
 
@@ -184,10 +189,10 @@ class SkillCategoryModel(Base):
 class SkillModel(Base):
     __tablename__ = "skills"
 
-    id: Mapped[str] = mapped_column(VARCHAR(36), primary_key=True)
+    id: Mapped[UUID] = mapped_column(BinaryUUID(), primary_key=True)
     name: Mapped[str] = mapped_column(VARCHAR(100), nullable=False, unique=True)
-    category_id: Mapped[str] = mapped_column(
-        VARCHAR(36), ForeignKey("skill_categories.id", ondelete="RESTRICT"), nullable=False
+    category_id: Mapped[UUID] = mapped_column(
+        BinaryUUID(), ForeignKey("skill_categories.id", ondelete="RESTRICT"), nullable=False
     )
 
     category: Mapped[SkillCategoryModel] = relationship(back_populates="skills", lazy="noload")
@@ -196,10 +201,10 @@ class SkillModel(Base):
 class ResumeSkillModel(Base):
     __tablename__ = "resume_skills"
 
-    resume_id: Mapped[str] = mapped_column(
-        VARCHAR(36), ForeignKey("resumes.id", ondelete="CASCADE"), primary_key=True
+    resume_id: Mapped[UUID] = mapped_column(
+        BinaryUUID(), ForeignKey("resumes.id", ondelete="CASCADE"), primary_key=True
     )
-    skill_id: Mapped[str] = mapped_column(
-        VARCHAR(36), ForeignKey("skills.id", ondelete="CASCADE"), primary_key=True
+    skill_id: Mapped[UUID] = mapped_column(
+        BinaryUUID(), ForeignKey("skills.id", ondelete="CASCADE"), primary_key=True
     )
     sort_order: Mapped[int] = mapped_column(SMALLINT, nullable=False, default=0)

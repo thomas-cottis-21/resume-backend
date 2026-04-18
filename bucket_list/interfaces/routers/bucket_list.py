@@ -1,6 +1,6 @@
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, status
 
 from bucket_list.application.commands.add_to_bucket_list import AddToBucketList, AddToBucketListInput
 from bucket_list.application.commands.remove_from_bucket_list import RemoveFromBucketList
@@ -23,7 +23,6 @@ from bucket_list.interfaces.schemas import (
     BucketListItemResponse,
     BucketListItemUpdateRequest,
 )
-from core.exceptions import ConflictError, NotFoundError
 
 router = APIRouter(tags=["bucket-list"])
 
@@ -47,19 +46,14 @@ async def add_to_bucket_list(
     body: BucketListItemCreateRequest,
     use_case: AddToBucketList = Depends(get_add_to_bucket_list),
 ) -> BucketListItemResponse:
-    try:
-        result = await use_case.execute(
-            AddToBucketListInput(
-                user_id=user_id,
-                destination_id=body.destination_id,
-                status_id=body.status_id,
-                notes=body.notes,
-            )
+    result = await use_case.execute(
+        AddToBucketListInput(
+            user_id=user_id,
+            destination_id=body.destination_id,
+            status_id=body.status_id,
+            notes=body.notes,
         )
-    except NotFoundError as e:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
-    except ConflictError as e:
-        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(e))
+    )
     return bucket_list_item_to_response(result)
 
 
@@ -69,10 +63,7 @@ async def get_bucket_list_item(
     item_id: UUID,
     use_case: GetBucketListItem = Depends(get_bucket_list_item_query),
 ) -> BucketListItemResponse:
-    try:
-        result = await use_case.execute(item_id)
-    except NotFoundError as e:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
+    result = await use_case.execute(item_id)
     return bucket_list_item_to_response(result)
 
 
@@ -83,16 +74,13 @@ async def update_bucket_list_item(
     body: BucketListItemUpdateRequest,
     use_case: UpdateBucketListItem = Depends(get_update_bucket_list_item),
 ) -> BucketListItemResponse:
-    try:
-        result = await use_case.execute(
-            UpdateBucketListItemInput(
-                item_id=item_id,
-                status_id=body.status_id,
-                notes=body.notes,
-            )
+    result = await use_case.execute(
+        UpdateBucketListItemInput(
+            item_id=item_id,
+            status_id=body.status_id,
+            notes=body.notes,
         )
-    except NotFoundError as e:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
+    )
     return bucket_list_item_to_response(result)
 
 
@@ -105,7 +93,4 @@ async def remove_from_bucket_list(
     item_id: UUID,
     use_case: RemoveFromBucketList = Depends(get_remove_from_bucket_list),
 ) -> None:
-    try:
-        await use_case.execute(item_id)
-    except NotFoundError as e:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
+    await use_case.execute(item_id)

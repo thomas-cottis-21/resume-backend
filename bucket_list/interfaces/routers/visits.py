@@ -1,6 +1,6 @@
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, status
 
 from bucket_list.application.commands.delete_visit import DeleteVisit
 from bucket_list.application.commands.log_visit import LogVisit, LogVisitInput
@@ -14,7 +14,6 @@ from bucket_list.interfaces.dependencies import (
 )
 from bucket_list.interfaces.mappers import visit_to_response
 from bucket_list.interfaces.schemas import VisitCreateRequest, VisitResponse
-from core.exceptions import NotFoundError
 
 router = APIRouter(tags=["bucket-list"])
 
@@ -38,17 +37,14 @@ async def log_visit(
     body: VisitCreateRequest,
     use_case: LogVisit = Depends(get_log_visit),
 ) -> VisitResponse:
-    try:
-        result = await use_case.execute(
-            LogVisitInput(
-                user_id=user_id,
-                destination_id=body.destination_id,
-                visited_at=body.visited_at,
-                notes=body.notes,
-            )
+    result = await use_case.execute(
+        LogVisitInput(
+            user_id=user_id,
+            destination_id=body.destination_id,
+            visited_at=body.visited_at,
+            notes=body.notes,
         )
-    except NotFoundError as e:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
+    )
     return visit_to_response(result)
 
 
@@ -58,10 +54,7 @@ async def get_visit(
     visit_id: UUID,
     use_case: GetVisit = Depends(get_visit_query),
 ) -> VisitResponse:
-    try:
-        result = await use_case.execute(visit_id)
-    except NotFoundError as e:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
+    result = await use_case.execute(visit_id)
     return visit_to_response(result)
 
 
@@ -71,7 +64,4 @@ async def delete_visit(
     visit_id: UUID,
     use_case: DeleteVisit = Depends(get_delete_visit),
 ) -> None:
-    try:
-        await use_case.execute(visit_id)
-    except NotFoundError as e:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
+    await use_case.execute(visit_id)

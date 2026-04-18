@@ -1,6 +1,6 @@
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, status
 
 from blog.application.commands.create_post import CreatePost, CreatePostInput
 from blog.application.commands.delete_post import DeletePost, DeletePostInput
@@ -23,7 +23,6 @@ from blog.interfaces.schemas import (
     PostSummaryResponse,
     PostUpdateRequest,
 )
-from core.exceptions import ConflictError, NotFoundError, OwnershipError
 
 router = APIRouter(prefix="/posts", tags=["posts"])
 
@@ -41,10 +40,7 @@ async def get_post_by_slug(
     slug: str,
     use_case: GetPost = Depends(get_get_post),
 ) -> PostResponse:
-    try:
-        result = await use_case.execute(GetPostInput(post_id=None, post_slug=slug))
-    except NotFoundError as e:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
+    result = await use_case.execute(GetPostInput(post_id=None, post_slug=slug))
     return post_to_response(result)
 
 
@@ -53,10 +49,7 @@ async def get_post(
     post_id: UUID,
     use_case: GetPost = Depends(get_get_post),
 ) -> PostResponse:
-    try:
-        result = await use_case.execute(GetPostInput(post_id=post_id, post_slug=None))
-    except NotFoundError as e:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
+    result = await use_case.execute(GetPostInput(post_id=post_id, post_slug=None))
     return post_to_response(result)
 
 
@@ -65,76 +58,56 @@ async def create_post(
     body: PostCreateRequest,
     use_case: CreatePost = Depends(get_create_post),
 ) -> PostResponse:
-    try:
-        result = await use_case.execute(
-            CreatePostInput(
-                title=body.title,
-                excerpt=body.excerpt,
-                content=body.content,
-                cover_image_url=body.cover_image_url,
-                reading_time_minutes=body.reading_time_minutes,
-                author_id=body.author_id,
-                tags=body.tag_ids,
-            )
+    result = await use_case.execute(
+        CreatePostInput(
+            title=body.title,
+            excerpt=body.excerpt,
+            content=body.content,
+            cover_image_url=body.cover_image_url,
+            reading_time_minutes=body.reading_time_minutes,
+            author_id=body.author_id,
+            tags=body.tag_ids,
         )
-    except ConflictError as e:
-        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(e))
+    )
     return post_to_response(result)
 
 
 @router.patch("/{post_id}", response_model=PostResponse)
 async def update_post(
     post_id: UUID,
-    user_id: UUID, # set as a query parameter until auth is implemented
+    user_id: UUID,  # temporary query param until auth is implemented
     body: PostUpdateRequest,
     use_case: UpdatePost = Depends(get_update_post),
 ) -> PostResponse:
-    try:
-        result = await use_case.execute(
-            UpdatePostInput(
-                post_id=post_id,
-                user_id=user_id,
-                title=body.title if body.title is not None else UNSET,
-                excerpt=body.excerpt if "excerpt" in body.model_fields_set else UNSET,
-                content=body.content if body.content is not None else UNSET,
-                cover_image_url=body.cover_image_url if "cover_image_url" in body.model_fields_set else UNSET,
-                reading_time_minutes=body.reading_time_minutes if "reading_time_minutes" in body.model_fields_set else UNSET,
-                tags=body.tag_ids if body.tag_ids is not None else UNSET,
-            )
+    result = await use_case.execute(
+        UpdatePostInput(
+            post_id=post_id,
+            user_id=user_id,
+            title=body.title if body.title is not None else UNSET,
+            excerpt=body.excerpt if "excerpt" in body.model_fields_set else UNSET,
+            content=body.content if body.content is not None else UNSET,
+            cover_image_url=body.cover_image_url if "cover_image_url" in body.model_fields_set else UNSET,
+            reading_time_minutes=body.reading_time_minutes if "reading_time_minutes" in body.model_fields_set else UNSET,
+            tags=body.tag_ids if body.tag_ids is not None else UNSET,
         )
-    except NotFoundError as e:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
-    except OwnershipError as e:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(e))
-    except ConflictError as e:
-        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(e))
+    )
     return post_to_response(result)
 
 
 @router.delete("/{post_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_post(
     post_id: UUID,
-    user_id: UUID, # set as a query parameter until auth is implemented
+    user_id: UUID,  # temporary query param until auth is implemented
     use_case: DeletePost = Depends(get_delete_post),
 ) -> None:
-    try:
-        await use_case.execute(DeletePostInput(post_id=post_id, user_id=user_id))
-    except NotFoundError as e:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
-    except OwnershipError as e:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(e))
+    await use_case.execute(DeletePostInput(post_id=post_id, user_id=user_id))
 
 
 @router.post("/{post_id}/publish", response_model=PostResponse)
 async def publish_post(
     post_id: UUID,
-    user_id: UUID, # set as a query parameter until auth is implemented
+    user_id: UUID,  # temporary query param until auth is implemented
     use_case: PublishPost = Depends(get_publish_post),
 ) -> PostResponse:
-    try:
-        result = await use_case.execute(PublishPostInput(post_id=post_id, user_id=user_id))
-    except NotFoundError as e:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
-    except OwnershipError as e:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(e))
+    result = await use_case.execute(PublishPostInput(post_id=post_id, user_id=user_id))
     return post_to_response(result)

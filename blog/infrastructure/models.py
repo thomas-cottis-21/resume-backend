@@ -1,9 +1,13 @@
 from __future__ import annotations
 
 from datetime import datetime
+from uuid import UUID
 
-from sqlalchemy import DATETIME, TEXT, VARCHAR, ForeignKey, text
+from sqlalchemy import DATETIME, TEXT, VARCHAR, ForeignKey, SmallInteger, text
+from sqlalchemy.dialects.mysql import LONGTEXT, TINYINT
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
+
+from core.database.types import BinaryUUID
 
 
 class Base(DeclarativeBase):
@@ -13,7 +17,7 @@ class Base(DeclarativeBase):
 class PostStatusModel(Base):
     __tablename__ = "post_statuses"
 
-    id: Mapped[str] = mapped_column(VARCHAR(36), primary_key=True)
+    id: Mapped[UUID] = mapped_column(BinaryUUID(), primary_key=True)
     name: Mapped[str] = mapped_column(VARCHAR(50), nullable=False, unique=True)
 
     posts: Mapped[list[PostModel]] = relationship(back_populates="status", lazy="noload")
@@ -22,7 +26,7 @@ class PostStatusModel(Base):
 class TagModel(Base):
     __tablename__ = "tags"
 
-    id: Mapped[str] = mapped_column(VARCHAR(36), primary_key=True)
+    id: Mapped[UUID] = mapped_column(BinaryUUID(), primary_key=True)
     name: Mapped[str] = mapped_column(VARCHAR(100), nullable=False, unique=True)
     slug: Mapped[str] = mapped_column(VARCHAR(100), nullable=False, unique=True)
     created_at: Mapped[datetime] = mapped_column(
@@ -35,11 +39,11 @@ class TagModel(Base):
 class PostTagModel(Base):
     __tablename__ = "post_tags"
 
-    post_id: Mapped[str] = mapped_column(
-        VARCHAR(36), ForeignKey("posts.id", ondelete="CASCADE"), primary_key=True
+    post_id: Mapped[UUID] = mapped_column(
+        BinaryUUID(), ForeignKey("posts.id", ondelete="CASCADE"), primary_key=True
     )
-    tag_id: Mapped[str] = mapped_column(
-        VARCHAR(36), ForeignKey("tags.id", ondelete="CASCADE"), primary_key=True
+    tag_id: Mapped[UUID] = mapped_column(
+        BinaryUUID(), ForeignKey("tags.id", ondelete="CASCADE"), primary_key=True
     )
 
     post: Mapped[PostModel] = relationship(back_populates="post_tags", lazy="noload")
@@ -49,17 +53,19 @@ class PostTagModel(Base):
 class PostModel(Base):
     __tablename__ = "posts"
 
-    id: Mapped[str] = mapped_column(VARCHAR(36), primary_key=True)
+    id: Mapped[UUID] = mapped_column(BinaryUUID(), primary_key=True)
     slug: Mapped[str] = mapped_column(VARCHAR(255), nullable=False, unique=True)
-    title: Mapped[str] = mapped_column(VARCHAR(255), nullable=False)
+    title: Mapped[str] = mapped_column(VARCHAR(500), nullable=False)
     excerpt: Mapped[str | None] = mapped_column(TEXT, nullable=True)
-    content: Mapped[str] = mapped_column(TEXT, nullable=False)
+    content: Mapped[str] = mapped_column(LONGTEXT, nullable=False)
     cover_image_url: Mapped[str | None] = mapped_column(VARCHAR(500), nullable=True)
-    reading_time_minutes: Mapped[int | None] = mapped_column(nullable=True)
-    status_id: Mapped[str] = mapped_column(
-        VARCHAR(36), ForeignKey("post_statuses.id", ondelete="RESTRICT"), nullable=False, index=True
+    reading_time_minutes: Mapped[int | None] = mapped_column(TINYINT(unsigned=True), nullable=True)
+    status_id: Mapped[UUID] = mapped_column(
+        BinaryUUID(), ForeignKey("post_statuses.id", ondelete="RESTRICT"), nullable=False, index=True
     )
-    author_id: Mapped[str] = mapped_column(VARCHAR(36), nullable=False, index=True)
+    author_id: Mapped[UUID] = mapped_column(
+        BinaryUUID(), ForeignKey("users.id"), nullable=False, index=True
+    )
     published_at: Mapped[datetime | None] = mapped_column(DATETIME, nullable=True)
     created_at: Mapped[datetime] = mapped_column(
         DATETIME, nullable=False, server_default=text("CURRENT_TIMESTAMP")

@@ -23,7 +23,7 @@ class SqlAlchemySkillRepository(SkillRepository):
             select(SkillModel).order_by(SkillModel.name)
         )
         return [
-            Skill(id=UUID(m.id), name=m.name, category_id=UUID(m.category_id))
+            Skill(id=m.id, name=m.name, category_id=m.category_id)
             for m in result.scalars().all()
         ]
 
@@ -36,12 +36,12 @@ class SqlAlchemySkillRepository(SkillRepository):
         categories = []
         for m in result.scalars().all():
             skills = [
-                Skill(id=UUID(s.id), name=s.name, category_id=UUID(s.category_id))
+                Skill(id=s.id, name=s.name, category_id=s.category_id)
                 for s in sorted(m.skills, key=lambda s: s.name)
             ]
             categories.append(
                 SkillCategory(
-                    id=UUID(m.id),
+                    id=m.id,
                     name=m.name,
                     sort_order=m.sort_order,
                     skills=skills,
@@ -53,37 +53,31 @@ class SqlAlchemySkillRepository(SkillRepository):
         result = await self._session.execute(
             select(ResumeSkillModel, SkillModel)
             .join(SkillModel, ResumeSkillModel.skill_id == SkillModel.id)
-            .where(ResumeSkillModel.resume_id == str(resume_id))
+            .where(ResumeSkillModel.resume_id == resume_id)
             .order_by(ResumeSkillModel.sort_order)
         )
-        entries = []
-        for rs, skill in result.all():
-            entries.append(
-                ResumeSkillEntry(
-                    skill_id=UUID(rs.skill_id),
-                    sort_order=rs.sort_order,
-                    skill=Skill(
-                        id=UUID(skill.id),
-                        name=skill.name,
-                        category_id=UUID(skill.category_id),
-                    ),
-                )
+        return [
+            ResumeSkillEntry(
+                skill_id=rs.skill_id,
+                sort_order=rs.sort_order,
+                skill=Skill(id=skill.id, name=skill.name, category_id=skill.category_id),
             )
-        return entries
+            for rs, skill in result.all()
+        ]
 
     async def set_resume_skills(
         self, resume_id: UUID, entries: list[ResumeSkillEntry]
     ) -> None:
         await self._session.execute(
             delete(ResumeSkillModel).where(
-                ResumeSkillModel.resume_id == str(resume_id)
+                ResumeSkillModel.resume_id == resume_id
             )
         )
         for entry in entries:
             self._session.add(
                 ResumeSkillModel(
-                    resume_id=str(resume_id),
-                    skill_id=str(entry.skill_id),
+                    resume_id=resume_id,
+                    skill_id=entry.skill_id,
                     sort_order=entry.sort_order,
                 )
             )
@@ -93,6 +87,4 @@ class SqlAlchemySkillRepository(SkillRepository):
         result = await self._session.execute(
             select(TechnologyModel).order_by(TechnologyModel.name)
         )
-        return [
-            Technology(id=UUID(m.id), name=m.name) for m in result.scalars().all()
-        ]
+        return [Technology(id=m.id, name=m.name) for m in result.scalars().all()]

@@ -1,6 +1,6 @@
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, status
 
 from resume.application.commands.add_work_experience import (
     AddWorkExperience,
@@ -17,7 +17,6 @@ from resume.application.commands.update_work_experience import (
 from resume.application.dtos import ReorderItem
 from resume.application.queries.get_work_experience import GetWorkExperience
 from resume.application.queries.list_work_experiences import ListWorkExperiences
-from core.exceptions import NotFoundError
 from resume.interfaces.dependencies import (
     get_add_work_experience,
     get_delete_work_experience,
@@ -82,10 +81,7 @@ async def get_work_experience_route(
     experience_id: UUID,
     use_case: GetWorkExperience = Depends(get_work_experience),
 ) -> WorkExperienceResponse:
-    try:
-        result = await use_case.execute(experience_id)
-    except NotFoundError as e:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
+    result = await use_case.execute(experience_id)
     return work_experience_to_response(result)
 
 
@@ -96,24 +92,21 @@ async def update_work_experience(
     body: WorkExperienceUpdateRequest,
     use_case: UpdateWorkExperience = Depends(get_update_work_experience),
 ) -> WorkExperienceResponse:
-    try:
-        result = await use_case.execute(
-            UpdateWorkExperienceInput(
-                experience_id=experience_id,
-                company=body.company,
-                role=body.role,
-                location=body.location,
-                start_date=body.start_date,
-                end_date=body.end_date,
-                sort_order=body.sort_order,
-                bullets=[
-                    UpdateBulletInput(content=b.content, sort_order=b.sort_order)
-                    for b in body.bullets
-                ],
-            )
+    result = await use_case.execute(
+        UpdateWorkExperienceInput(
+            experience_id=experience_id,
+            company=body.company,
+            role=body.role,
+            location=body.location,
+            start_date=body.start_date,
+            end_date=body.end_date,
+            sort_order=body.sort_order,
+            bullets=[
+                UpdateBulletInput(content=b.content, sort_order=b.sort_order)
+                for b in body.bullets
+            ],
         )
-    except NotFoundError as e:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
+    )
     return work_experience_to_response(result)
 
 
@@ -123,7 +116,4 @@ async def delete_work_experience(
     experience_id: UUID,
     use_case: DeleteWorkExperience = Depends(get_delete_work_experience),
 ) -> None:
-    try:
-        await use_case.execute(experience_id)
-    except NotFoundError as e:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
+    await use_case.execute(experience_id)

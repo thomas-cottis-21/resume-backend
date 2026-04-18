@@ -1,6 +1,6 @@
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, status
 
 from resume.application.commands.activate_resume import ActivateResume
 from resume.application.commands.create_resume import CreateResume, CreateResumeInput
@@ -9,7 +9,6 @@ from resume.application.commands.update_resume import UpdateResume, UpdateResume
 from resume.application.queries.get_active_resume import GetActiveResume
 from resume.application.queries.get_resume_by_id import GetResumeById
 from resume.application.queries.list_resumes import ListResumes
-from core.exceptions import NotFoundError
 from resume.interfaces.dependencies import (
     get_activate_resume,
     get_active_resume,
@@ -50,10 +49,7 @@ async def get_active_resume_route(
     user_id: UUID,
     use_case: GetActiveResume = Depends(get_active_resume),
 ) -> ResumeResponse:
-    try:
-        result = await use_case.execute(user_id)
-    except NotFoundError as e:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
+    result = await use_case.execute(user_id)
     return resume_to_response(result)
 
 
@@ -62,10 +58,7 @@ async def get_resume(
     resume_id: UUID,
     use_case: GetResumeById = Depends(get_resume_by_id),
 ) -> ResumeResponse:
-    try:
-        result = await use_case.execute(resume_id)
-    except NotFoundError as e:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
+    result = await use_case.execute(resume_id)
     return resume_to_response(result)
 
 
@@ -75,10 +68,7 @@ async def update_resume(
     body: ResumeUpdateRequest,
     use_case: UpdateResume = Depends(get_update_resume),
 ) -> ResumeResponse:
-    try:
-        result = await use_case.execute(UpdateResumeInput(resume_id=resume_id, tagline=body.tagline))
-    except NotFoundError as e:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
+    result = await use_case.execute(UpdateResumeInput(resume_id=resume_id, tagline=body.tagline))
     return resume_to_response(result)
 
 
@@ -87,10 +77,7 @@ async def delete_resume(
     resume_id: UUID,
     use_case: DeleteResume = Depends(get_delete_resume),
 ) -> None:
-    try:
-        await use_case.execute(resume_id)
-    except NotFoundError as e:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
+    await use_case.execute(resume_id)
 
 
 @router.post("/{resume_id}/activate", response_model=ResumeResponse)
@@ -98,8 +85,5 @@ async def activate_resume(
     resume_id: UUID,
     use_case: ActivateResume = Depends(get_activate_resume),
 ) -> ResumeResponse:
-    try:
-        result = await use_case.execute(resume_id)
-    except NotFoundError as e:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
+    result = await use_case.execute(resume_id)
     return resume_to_response(result)

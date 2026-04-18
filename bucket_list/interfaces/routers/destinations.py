@@ -1,6 +1,6 @@
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, status
 
 from bucket_list.application.commands.create_destination import CreateDestination, CreateDestinationInput
 from bucket_list.application.commands.delete_destination import DeleteDestination
@@ -30,7 +30,6 @@ from bucket_list.interfaces.schemas import (
     DestinationResponse,
     DestinationUpdateRequest,
 )
-from core.exceptions import NotFoundError
 
 router = APIRouter(tags=["bucket-list"])
 
@@ -71,10 +70,7 @@ async def get_destination(
     destination_id: UUID,
     use_case: GetDestination = Depends(get_destination_query),
 ) -> DestinationResponse:
-    try:
-        result = await use_case.execute(destination_id)
-    except NotFoundError as e:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
+    result = await use_case.execute(destination_id)
     return destination_to_response(result)
 
 
@@ -102,20 +98,17 @@ async def update_destination(
     body: DestinationUpdateRequest,
     use_case: UpdateDestination = Depends(get_update_destination),
 ) -> DestinationResponse:
-    try:
-        result = await use_case.execute(
-            UpdateDestinationInput(
-                destination_id=destination_id,
-                name=body.name,
-                country=body.country,
-                continent=body.continent,
-                description=body.description,
-                cover_image_url=body.cover_image_url,
-                category_id=body.category_id,
-            )
+    result = await use_case.execute(
+        UpdateDestinationInput(
+            destination_id=destination_id,
+            name=body.name,
+            country=body.country,
+            continent=body.continent,
+            description=body.description,
+            cover_image_url=body.cover_image_url,
+            category_id=body.category_id,
         )
-    except NotFoundError as e:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
+    )
     return destination_to_response(result)
 
 
@@ -124,7 +117,4 @@ async def delete_destination(
     destination_id: UUID,
     use_case: DeleteDestination = Depends(get_delete_destination),
 ) -> None:
-    try:
-        await use_case.execute(destination_id)
-    except NotFoundError as e:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
+    await use_case.execute(destination_id)

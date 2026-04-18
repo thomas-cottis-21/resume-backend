@@ -11,13 +11,13 @@ from resume.infrastructure.models import ProjectModel, ProjectTechnologyModel, T
 
 def _to_entity(m: ProjectModel) -> Project:
     technologies = [
-        Technology(id=UUID(pt.technology.id), name=pt.technology.name)
+        Technology(id=pt.technology.id, name=pt.technology.name)
         for pt in sorted(m.project_technologies, key=lambda pt: pt.sort_order)
         if pt.technology is not None
     ]
     return Project(
-        id=UUID(m.id),
-        resume_id=UUID(m.resume_id),
+        id=m.id,
+        resume_id=m.resume_id,
         name=m.name,
         description=m.description,
         github_url=m.github_url,
@@ -41,7 +41,7 @@ class SqlAlchemyProjectRepository(ProjectRepository):
                     ProjectTechnologyModel.technology
                 )
             )
-            .where(ProjectModel.id == str(project_id))
+            .where(ProjectModel.id == project_id)
         )
         model = result.scalar_one_or_none()
         return _to_entity(model) if model else None
@@ -54,13 +54,13 @@ class SqlAlchemyProjectRepository(ProjectRepository):
                     ProjectTechnologyModel.technology
                 )
             )
-            .where(ProjectModel.resume_id == str(resume_id))
+            .where(ProjectModel.resume_id == resume_id)
             .order_by(ProjectModel.sort_order)
         )
         return [_to_entity(m) for m in result.scalars().all()]
 
     async def save(self, project: Project) -> None:
-        existing = await self._session.get(ProjectModel, str(project.id))
+        existing = await self._session.get(ProjectModel, project.id)
         if existing:
             existing.name = project.name
             existing.description = project.description
@@ -71,8 +71,8 @@ class SqlAlchemyProjectRepository(ProjectRepository):
         else:
             self._session.add(
                 ProjectModel(
-                    id=str(project.id),
-                    resume_id=str(project.resume_id),
+                    id=project.id,
+                    resume_id=project.resume_id,
                     name=project.name,
                     description=project.description,
                     github_url=project.github_url,
@@ -89,14 +89,14 @@ class SqlAlchemyProjectRepository(ProjectRepository):
     ) -> None:
         await self._session.execute(
             delete(ProjectTechnologyModel).where(
-                ProjectTechnologyModel.project_id == str(project_id)
+                ProjectTechnologyModel.project_id == project_id
             )
         )
         for tech_id, sort_order in technology_ids:
             self._session.add(
                 ProjectTechnologyModel(
-                    project_id=str(project_id),
-                    technology_id=str(tech_id),
+                    project_id=project_id,
+                    technology_id=tech_id,
                     sort_order=sort_order,
                 )
             )
@@ -104,7 +104,7 @@ class SqlAlchemyProjectRepository(ProjectRepository):
 
     async def delete(self, project_id: UUID) -> None:
         await self._session.execute(
-            delete(ProjectModel).where(ProjectModel.id == str(project_id))
+            delete(ProjectModel).where(ProjectModel.id == project_id)
         )
         await self._session.flush()
 
@@ -112,7 +112,7 @@ class SqlAlchemyProjectRepository(ProjectRepository):
         for project_id, sort_order in items:
             await self._session.execute(
                 update(ProjectModel)
-                .where(ProjectModel.id == str(project_id))
+                .where(ProjectModel.id == project_id)
                 .values(sort_order=sort_order)
             )
         await self._session.flush()

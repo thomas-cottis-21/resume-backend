@@ -11,8 +11,8 @@ from resume.infrastructure.models import WorkExperienceBulletModel, WorkExperien
 
 def _bullet_to_entity(m: WorkExperienceBulletModel) -> WorkExperienceBullet:
     return WorkExperienceBullet(
-        id=UUID(m.id),
-        experience_id=UUID(m.experience_id),
+        id=m.id,
+        experience_id=m.experience_id,
         content=m.content,
         sort_order=m.sort_order,
     )
@@ -20,8 +20,8 @@ def _bullet_to_entity(m: WorkExperienceBulletModel) -> WorkExperienceBullet:
 
 def _to_entity(m: WorkExperienceModel) -> WorkExperience:
     return WorkExperience(
-        id=UUID(m.id),
-        resume_id=UUID(m.resume_id),
+        id=m.id,
+        resume_id=m.resume_id,
         company=m.company,
         role=m.role,
         location=m.location,
@@ -42,7 +42,7 @@ class SqlAlchemyWorkExperienceRepository(WorkExperienceRepository):
         result = await self._session.execute(
             select(WorkExperienceModel)
             .options(selectinload(WorkExperienceModel.bullets))
-            .where(WorkExperienceModel.id == str(experience_id))
+            .where(WorkExperienceModel.id == experience_id)
         )
         model = result.scalar_one_or_none()
         return _to_entity(model) if model else None
@@ -51,13 +51,13 @@ class SqlAlchemyWorkExperienceRepository(WorkExperienceRepository):
         result = await self._session.execute(
             select(WorkExperienceModel)
             .options(selectinload(WorkExperienceModel.bullets))
-            .where(WorkExperienceModel.resume_id == str(resume_id))
+            .where(WorkExperienceModel.resume_id == resume_id)
             .order_by(WorkExperienceModel.sort_order)
         )
         return [_to_entity(m) for m in result.scalars().all()]
 
     async def save(self, experience: WorkExperience) -> None:
-        existing = await self._session.get(WorkExperienceModel, str(experience.id))
+        existing = await self._session.get(WorkExperienceModel, experience.id)
         if existing:
             existing.company = experience.company
             existing.role = experience.role
@@ -69,8 +69,8 @@ class SqlAlchemyWorkExperienceRepository(WorkExperienceRepository):
         else:
             self._session.add(
                 WorkExperienceModel(
-                    id=str(experience.id),
-                    resume_id=str(experience.resume_id),
+                    id=experience.id,
+                    resume_id=experience.resume_id,
                     company=experience.company,
                     role=experience.role,
                     location=experience.location,
@@ -88,14 +88,14 @@ class SqlAlchemyWorkExperienceRepository(WorkExperienceRepository):
     ) -> None:
         await self._session.execute(
             delete(WorkExperienceBulletModel).where(
-                WorkExperienceBulletModel.experience_id == str(experience_id)
+                WorkExperienceBulletModel.experience_id == experience_id
             )
         )
         for bullet in bullets:
             self._session.add(
                 WorkExperienceBulletModel(
-                    id=str(bullet.id),
-                    experience_id=str(bullet.experience_id),
+                    id=bullet.id,
+                    experience_id=bullet.experience_id,
                     content=bullet.content,
                     sort_order=bullet.sort_order,
                 )
@@ -105,7 +105,7 @@ class SqlAlchemyWorkExperienceRepository(WorkExperienceRepository):
     async def delete(self, experience_id: UUID) -> None:
         await self._session.execute(
             delete(WorkExperienceModel).where(
-                WorkExperienceModel.id == str(experience_id)
+                WorkExperienceModel.id == experience_id
             )
         )
         await self._session.flush()
@@ -114,7 +114,7 @@ class SqlAlchemyWorkExperienceRepository(WorkExperienceRepository):
         for exp_id, sort_order in items:
             await self._session.execute(
                 update(WorkExperienceModel)
-                .where(WorkExperienceModel.id == str(exp_id))
+                .where(WorkExperienceModel.id == exp_id)
                 .values(sort_order=sort_order)
             )
         await self._session.flush()

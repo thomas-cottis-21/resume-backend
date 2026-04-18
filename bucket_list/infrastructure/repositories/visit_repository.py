@@ -18,26 +18,26 @@ def _to_entity(m: VisitModel) -> Visit:
         category = None
         if dest.category is not None:
             category = DestinationCategory(
-                id=UUID(dest.category.id),
+                id=dest.category.id,
                 name=dest.category.name,
                 sort_order=dest.category.sort_order,
             )
         destination = Destination(
-            id=UUID(dest.id),
+            id=dest.id,
             name=dest.name,
             country=dest.country,
             continent=dest.continent,
             description=dest.description,
             cover_image_url=dest.cover_image_url,
-            category_id=UUID(dest.category_id) if dest.category_id else None,
+            category_id=dest.category_id,
             created_at=dest.created_at,
             updated_at=dest.updated_at,
             category=category,
         )
     return Visit(
-        id=UUID(m.id),
-        user_id=UUID(m.user_id),
-        destination_id=UUID(m.destination_id),
+        id=m.id,
+        user_id=m.user_id,
+        destination_id=m.destination_id,
         visited_at=m.visited_at,
         notes=m.notes,
         created_at=m.created_at,
@@ -58,7 +58,7 @@ class SqlAlchemyVisitRepository(VisitRepository):
         result = await self._session.execute(
             select(VisitModel)
             .options(*_EAGER)
-            .where(VisitModel.id == str(visit_id))
+            .where(VisitModel.id == visit_id)
         )
         model = result.scalar_one_or_none()
         return _to_entity(model) if model else None
@@ -67,19 +67,19 @@ class SqlAlchemyVisitRepository(VisitRepository):
         result = await self._session.execute(
             select(VisitModel)
             .options(*_EAGER)
-            .where(VisitModel.user_id == str(user_id))
+            .where(VisitModel.user_id == user_id)
             .order_by(VisitModel.visited_at.desc())
         )
         return [_to_entity(m) for m in result.scalars().all()]
 
     async def save(self, visit: Visit) -> None:
-        existing = await self._session.get(VisitModel, str(visit.id))
+        existing = await self._session.get(VisitModel, visit.id)
         if not existing:
             self._session.add(
                 VisitModel(
-                    id=str(visit.id),
-                    user_id=str(visit.user_id),
-                    destination_id=str(visit.destination_id),
+                    id=visit.id,
+                    user_id=visit.user_id,
+                    destination_id=visit.destination_id,
                     visited_at=visit.visited_at,
                     notes=visit.notes,
                     created_at=visit.created_at,
@@ -89,6 +89,6 @@ class SqlAlchemyVisitRepository(VisitRepository):
 
     async def delete(self, visit_id: UUID) -> None:
         await self._session.execute(
-            delete(VisitModel).where(VisitModel.id == str(visit_id))
+            delete(VisitModel).where(VisitModel.id == visit_id)
         )
         await self._session.flush()

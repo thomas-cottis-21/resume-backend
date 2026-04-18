@@ -19,19 +19,19 @@ class SqlAlchemyStatusRepository(StatusRepository):
             select(BucketListStatusModel).order_by(BucketListStatusModel.name)
         )
         return [
-            BucketListStatus(id=UUID(m.id), name=m.name)
+            BucketListStatus(id=m.id, name=m.name)
             for m in result.scalars().all()
         ]
 
     async def get_status_by_id(self, status_id: UUID) -> BucketListStatus | None:
-        model = await self._session.get(BucketListStatusModel, str(status_id))
-        return BucketListStatus(id=UUID(model.id), name=model.name) if model else None
+        model = await self._session.get(BucketListStatusModel, status_id)
+        return BucketListStatus(id=model.id, name=model.name) if model else None
 
     async def list_categories(self) -> list[DestinationCategory]:
         result = await self._session.execute(
             select(DestinationCategoryModel).order_by(DestinationCategoryModel.sort_order)
         )
         return [
-            DestinationCategory(id=UUID(m.id), name=m.name, sort_order=m.sort_order)
+            DestinationCategory(id=m.id, name=m.name, sort_order=m.sort_order)
             for m in result.scalars().all()
         ]

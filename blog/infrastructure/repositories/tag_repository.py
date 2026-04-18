@@ -13,7 +13,7 @@ class SqlAlchemyTagRepository(TagRepository):
         self._session = session
 
     async def get_by_id(self, tag_id: UUID) -> Tag | None:
-        model = await self._session.get(TagModel, str(tag_id))
+        model = await self._session.get(TagModel, tag_id)
         return _to_entity(model) if model else None
 
     async def list_all(self) -> list[Tag]:
@@ -22,4 +22,4 @@ class SqlAlchemyTagRepository(TagRepository):
 
 
 def _to_entity(m: TagModel) -> Tag:
-    return Tag(id=UUID(m.id), name=m.name, slug=m.slug, created_at=m.created_at)
+    return Tag(id=m.id, name=m.name, slug=m.slug, created_at=m.created_at)

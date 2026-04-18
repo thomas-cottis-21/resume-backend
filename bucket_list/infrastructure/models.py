@@ -1,9 +1,12 @@
 from __future__ import annotations
 
 from datetime import date, datetime
+from uuid import UUID
 
 from sqlalchemy import DATE, DATETIME, TEXT, VARCHAR, ForeignKey, SmallInteger, text
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
+
+from core.database.types import BinaryUUID
 
 
 class Base(DeclarativeBase):
@@ -13,7 +16,7 @@ class Base(DeclarativeBase):
 class DestinationCategoryModel(Base):
     __tablename__ = "destination_categories"
 
-    id: Mapped[str] = mapped_column(VARCHAR(36), primary_key=True)
+    id: Mapped[UUID] = mapped_column(BinaryUUID(), primary_key=True)
     name: Mapped[str] = mapped_column(VARCHAR(100), nullable=False, unique=True)
     sort_order: Mapped[int] = mapped_column(SmallInteger, nullable=False, default=0)
 
@@ -25,7 +28,7 @@ class DestinationCategoryModel(Base):
 class BucketListStatusModel(Base):
     __tablename__ = "bucket_list_statuses"
 
-    id: Mapped[str] = mapped_column(VARCHAR(36), primary_key=True)
+    id: Mapped[UUID] = mapped_column(BinaryUUID(), primary_key=True)
     name: Mapped[str] = mapped_column(VARCHAR(50), nullable=False, unique=True)
 
     bucket_list_items: Mapped[list[BucketListItemModel]] = relationship(
@@ -36,14 +39,14 @@ class BucketListStatusModel(Base):
 class DestinationModel(Base):
     __tablename__ = "destinations"
 
-    id: Mapped[str] = mapped_column(VARCHAR(36), primary_key=True)
+    id: Mapped[UUID] = mapped_column(BinaryUUID(), primary_key=True)
     name: Mapped[str] = mapped_column(VARCHAR(255), nullable=False)
     country: Mapped[str] = mapped_column(VARCHAR(255), nullable=False)
     continent: Mapped[str] = mapped_column(VARCHAR(100), nullable=False)
     description: Mapped[str | None] = mapped_column(TEXT, nullable=True)
     cover_image_url: Mapped[str | None] = mapped_column(VARCHAR(500), nullable=True)
-    category_id: Mapped[str | None] = mapped_column(
-        VARCHAR(36),
+    category_id: Mapped[UUID | None] = mapped_column(
+        BinaryUUID(),
         ForeignKey("destination_categories.id", ondelete="SET NULL"),
         nullable=True,
     )
@@ -70,15 +73,17 @@ class DestinationModel(Base):
 class BucketListItemModel(Base):
     __tablename__ = "bucket_list_items"
 
-    id: Mapped[str] = mapped_column(VARCHAR(36), primary_key=True)
-    user_id: Mapped[str] = mapped_column(VARCHAR(36), nullable=False, index=True)
-    destination_id: Mapped[str] = mapped_column(
-        VARCHAR(36),
+    id: Mapped[UUID] = mapped_column(BinaryUUID(), primary_key=True)
+    user_id: Mapped[UUID] = mapped_column(
+        BinaryUUID(), ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    destination_id: Mapped[UUID] = mapped_column(
+        BinaryUUID(),
         ForeignKey("destinations.id", ondelete="CASCADE"),
         nullable=False,
     )
-    status_id: Mapped[str] = mapped_column(
-        VARCHAR(36),
+    status_id: Mapped[UUID] = mapped_column(
+        BinaryUUID(),
         ForeignKey("bucket_list_statuses.id", ondelete="RESTRICT"),
         nullable=False,
     )
@@ -103,10 +108,12 @@ class BucketListItemModel(Base):
 class VisitModel(Base):
     __tablename__ = "visits"
 
-    id: Mapped[str] = mapped_column(VARCHAR(36), primary_key=True)
-    user_id: Mapped[str] = mapped_column(VARCHAR(36), nullable=False, index=True)
-    destination_id: Mapped[str] = mapped_column(
-        VARCHAR(36),
+    id: Mapped[UUID] = mapped_column(BinaryUUID(), primary_key=True)
+    user_id: Mapped[UUID] = mapped_column(
+        BinaryUUID(), ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    destination_id: Mapped[UUID] = mapped_column(
+        BinaryUUID(),
         ForeignKey("destinations.id", ondelete="CASCADE"),
         nullable=False,
     )

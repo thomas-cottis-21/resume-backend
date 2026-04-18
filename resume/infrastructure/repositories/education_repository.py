@@ -10,8 +10,8 @@ from resume.infrastructure.models import EducationModel
 
 def _to_entity(m: EducationModel) -> Education:
     return Education(
-        id=UUID(m.id),
-        resume_id=UUID(m.resume_id),
+        id=m.id,
+        resume_id=m.resume_id,
         institution=m.institution,
         degree=m.degree,
         start_year=m.start_year,
@@ -27,7 +27,7 @@ class SqlAlchemyEducationRepository(EducationRepository):
 
     async def get_by_id(self, education_id: UUID) -> Education | None:
         result = await self._session.execute(
-            select(EducationModel).where(EducationModel.id == str(education_id))
+            select(EducationModel).where(EducationModel.id == education_id)
         )
         model = result.scalar_one_or_none()
         return _to_entity(model) if model else None
@@ -35,13 +35,13 @@ class SqlAlchemyEducationRepository(EducationRepository):
     async def list_by_resume(self, resume_id: UUID) -> list[Education]:
         result = await self._session.execute(
             select(EducationModel)
-            .where(EducationModel.resume_id == str(resume_id))
+            .where(EducationModel.resume_id == resume_id)
             .order_by(EducationModel.sort_order)
         )
         return [_to_entity(m) for m in result.scalars().all()]
 
     async def save(self, education: Education) -> None:
-        existing = await self._session.get(EducationModel, str(education.id))
+        existing = await self._session.get(EducationModel, education.id)
         if existing:
             existing.institution = education.institution
             existing.degree = education.degree
@@ -51,8 +51,8 @@ class SqlAlchemyEducationRepository(EducationRepository):
         else:
             self._session.add(
                 EducationModel(
-                    id=str(education.id),
-                    resume_id=str(education.resume_id),
+                    id=education.id,
+                    resume_id=education.resume_id,
                     institution=education.institution,
                     degree=education.degree,
                     start_year=education.start_year,
@@ -65,6 +65,6 @@ class SqlAlchemyEducationRepository(EducationRepository):
 
     async def delete(self, education_id: UUID) -> None:
         await self._session.execute(
-            delete(EducationModel).where(EducationModel.id == str(education_id))
+            delete(EducationModel).where(EducationModel.id == education_id)
         )
         await self._session.flush()

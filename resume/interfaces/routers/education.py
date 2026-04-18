@@ -1,13 +1,12 @@
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, status
 
 from resume.application.commands.add_education import AddEducation, AddEducationInput
 from resume.application.commands.delete_education import DeleteEducation
 from resume.application.commands.update_education import UpdateEducation, UpdateEducationInput
 from resume.application.queries.get_education_entry import GetEducationEntry
 from resume.application.queries.list_education import ListEducation
-from core.exceptions import NotFoundError
 from resume.interfaces.dependencies import (
     get_add_education,
     get_delete_education,
@@ -59,10 +58,7 @@ async def get_education(
     education_id: UUID,
     use_case: GetEducationEntry = Depends(get_education_entry),
 ) -> EducationResponse:
-    try:
-        result = await use_case.execute(education_id)
-    except NotFoundError as e:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
+    result = await use_case.execute(education_id)
     return education_to_response(result)
 
 
@@ -73,19 +69,16 @@ async def update_education(
     body: EducationUpdateRequest,
     use_case: UpdateEducation = Depends(get_update_education),
 ) -> EducationResponse:
-    try:
-        result = await use_case.execute(
-            UpdateEducationInput(
-                education_id=education_id,
-                institution=body.institution,
-                degree=body.degree,
-                start_year=body.start_year,
-                end_year=body.end_year,
-                sort_order=body.sort_order,
-            )
+    result = await use_case.execute(
+        UpdateEducationInput(
+            education_id=education_id,
+            institution=body.institution,
+            degree=body.degree,
+            start_year=body.start_year,
+            end_year=body.end_year,
+            sort_order=body.sort_order,
         )
-    except NotFoundError as e:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
+    )
     return education_to_response(result)
 
 
@@ -95,7 +88,4 @@ async def delete_education(
     education_id: UUID,
     use_case: DeleteEducation = Depends(get_delete_education),
 ) -> None:
-    try:
-        await use_case.execute(education_id)
-    except NotFoundError as e:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
+    await use_case.execute(education_id)
