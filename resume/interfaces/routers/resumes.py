@@ -9,6 +9,8 @@ from resume.application.commands.update_resume import UpdateResume, UpdateResume
 from resume.application.queries.get_active_resume import GetActiveResume
 from resume.application.queries.get_resume_by_id import GetResumeById
 from resume.application.queries.list_resumes import ListResumes
+from resume.application.dtos import ResumeLinkOutput
+from resume.infrastructure.repositories.resume_link_repository import SqlAlchemyResumeLinkRepository
 from resume.interfaces.dependencies import (
     get_activate_resume,
     get_active_resume,
@@ -16,10 +18,11 @@ from resume.interfaces.dependencies import (
     get_delete_resume,
     get_list_resumes,
     get_resume_by_id,
+    get_resume_link_repository,
     get_update_resume,
 )
-from resume.interfaces.mappers import resume_to_response
-from resume.interfaces.schemas import ResumeCreateRequest, ResumeResponse, ResumeUpdateRequest
+from resume.interfaces.mappers import resume_link_to_response, resume_to_response
+from resume.interfaces.schemas import ResumeLinkResponse, ResumeCreateRequest, ResumeResponse, ResumeUpdateRequest
 
 router = APIRouter(prefix="/resumes", tags=["resumes"])
 
@@ -78,6 +81,20 @@ async def delete_resume(
     use_case: DeleteResume = Depends(get_delete_resume),
 ) -> None:
     await use_case.execute(resume_id)
+
+
+@router.get("/{resume_id}/links", response_model=list[ResumeLinkResponse])
+async def list_resume_links(
+    resume_id: UUID,
+    repo: SqlAlchemyResumeLinkRepository = Depends(get_resume_link_repository),
+) -> list[ResumeLinkResponse]:
+    links = await repo.list_by_resume(resume_id)
+    return [
+        resume_link_to_response(
+            ResumeLinkOutput(id=l.id, resume_id=l.resume_id, label=l.label, url=l.url, sort_order=l.sort_order)
+        )
+        for l in links
+    ]
 
 
 @router.post("/{resume_id}/activate", response_model=ResumeResponse)

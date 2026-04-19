@@ -16,17 +16,28 @@ from blog.interfaces.dependencies import (
     get_get_post,
     get_list_posts,
     get_publish_post,
+    get_tag_repository,
     get_update_post,
 )
-from blog.interfaces.mappers import post_summary_to_response, post_to_response
+from blog.infrastructure.repositories.tag_repository import SqlAlchemyTagRepository
+from blog.interfaces.mappers import post_summary_to_response, post_to_response, tag_to_response
 from blog.interfaces.schemas import (
     PostCreateRequest,
     PostResponse,
     PostSummaryResponse,
     PostUpdateRequest,
+    TagResponse,
 )
 
 router = APIRouter(prefix="/posts", tags=["posts"])
+
+
+@router.get("/tags", response_model=list[TagResponse])
+async def list_tags(
+    repo: SqlAlchemyTagRepository = Depends(get_tag_repository),
+) -> list[TagResponse]:
+    tags = await repo.list_all()
+    return [TagResponse(id=t.id, name=t.name, slug=t.slug, created_at=t.created_at) for t in tags]
 
 
 @router.get("", response_model=list[PostSummaryResponse])

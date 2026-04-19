@@ -38,3 +38,7 @@ async def get_delete_post(session: AsyncSession = Depends(get_db_session)) -> De
 
 async def get_publish_post(session: AsyncSession = Depends(get_db_session)) -> PublishPost:
     return PublishPost(SqlAlchemyPostRepository(session), SqlAlchemyStatusRepository(session))
+
+
+async def get_tag_repository(session: AsyncSession = Depends(get_db_session)) -> SqlAlchemyTagRepository:
+    return SqlAlchemyTagRepository(session)

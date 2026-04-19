@@ -35,9 +35,16 @@ from resume.infrastructure.repositories.education_repository import SqlAlchemyEd
 from resume.infrastructure.repositories.project_repository import SqlAlchemyProjectRepository
 from resume.infrastructure.repositories.resume_repository import SqlAlchemyResumeRepository
 from resume.infrastructure.repositories.skill_repository import SqlAlchemySkillRepository
+from resume.infrastructure.repositories.resume_link_repository import SqlAlchemyResumeLinkRepository
 from resume.infrastructure.repositories.work_experience_repository import (
     SqlAlchemyWorkExperienceRepository,
 )
+
+async def get_resume_link_repository(
+    session: AsyncSession = Depends(get_db_session),
+) -> SqlAlchemyResumeLinkRepository:
+    return SqlAlchemyResumeLinkRepository(session)
+
 
 # ── Query factories ────────────────────────────────────────────────────────────
 

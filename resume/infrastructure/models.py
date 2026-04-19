@@ -31,6 +31,7 @@ class ResumeModel(Base):
         BinaryUUID(), ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True
     )
     tagline: Mapped[str | None] = mapped_column(VARCHAR(500), nullable=True)
+    title: Mapped[str | None] = mapped_column(VARCHAR(255), nullable=True)
     is_active: Mapped[bool] = mapped_column(BOOLEAN, nullable=False, default=False)
     created_at: Mapped[datetime] = mapped_column(
         DATETIME, nullable=False, server_default=text("CURRENT_TIMESTAMP")
@@ -41,6 +42,10 @@ class ResumeModel(Base):
         server_default=text("CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP"),
     )
 
+    links: Mapped[list[ResumeLinkModel]] = relationship(
+        back_populates="resume", lazy="noload", cascade="all, delete-orphan",
+        order_by="ResumeLinkModel.sort_order",
+    )
     work_experiences: Mapped[list[WorkExperienceModel]] = relationship(
         back_populates="resume", lazy="noload", cascade="all, delete-orphan"
     )
@@ -208,3 +213,17 @@ class ResumeSkillModel(Base):
         BinaryUUID(), ForeignKey("skills.id", ondelete="CASCADE"), primary_key=True
     )
     sort_order: Mapped[int] = mapped_column(SMALLINT, nullable=False, default=0)
+
+
+class ResumeLinkModel(Base):
+    __tablename__ = "resume_links"
+
+    id: Mapped[UUID] = mapped_column(BinaryUUID(), primary_key=True)
+    resume_id: Mapped[UUID] = mapped_column(
+        BinaryUUID(), ForeignKey("resumes.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    label: Mapped[str] = mapped_column(VARCHAR(100), nullable=False)
+    url: Mapped[str] = mapped_column(VARCHAR(500), nullable=False)
+    sort_order: Mapped[int] = mapped_column(SMALLINT, nullable=False, default=0)
+
+    resume: Mapped[ResumeModel] = relationship(back_populates="links", lazy="noload")

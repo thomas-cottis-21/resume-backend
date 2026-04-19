@@ -27,7 +27,7 @@ class Settings(BaseSettings):
     google_token_url: str = "https://oauth2.googleapis.com/token"
     google_userinfo_url: str = "https://www.googleapis.com/oauth2/v3/userinfo"
     oauth_success_redirect: str = Field(
-        default="http://localhost:5173/oauth/callback",
+        default="http://localhost:5173/auth/callback",
         alias="OAUTH_SUCCESS_REDIRECT",
     )
 

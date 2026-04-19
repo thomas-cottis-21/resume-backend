@@ -3,6 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
 from auth.interfaces.router import router as auth_router
+from auth.interfaces.routers.users_router import router as users_router
 from blog.interfaces.router import blog_router
 from bucket_list.interfaces.router import bucket_list_router_root
 from core.config import settings
@@ -47,6 +48,7 @@ def create_app() -> FastAPI:
         return JSONResponse(status_code=status.HTTP_401_UNAUTHORIZED, content={"detail": str(exc)})
 
     app.include_router(auth_router, prefix="/api/v1/auth")
+    app.include_router(users_router, prefix="/api/v1")
     app.include_router(resume_router, prefix="/api/v1")
     app.include_router(bucket_list_router_root, prefix="/api/v1")
     app.include_router(blog_router, prefix="/api/v1")

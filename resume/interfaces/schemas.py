@@ -17,12 +17,23 @@ class ResumeUpdateRequest(BaseModel):
     tagline: str | None = None
 
 
+class ResumeLinkResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: UUID
+    resume_id: UUID
+    label: str
+    url: str
+    sort_order: int
+
+
 class ResumeResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
     id: UUID
     user_id: UUID
     tagline: str | None
+    title: str | None
     is_active: bool
     created_at: datetime
     updated_at: datetime

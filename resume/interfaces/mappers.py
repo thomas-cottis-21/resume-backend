@@ -2,6 +2,7 @@ from resume.application.dtos import (
     BulletOutput,
     EducationOutput,
     ProjectOutput,
+    ResumeLinkOutput,
     ResumeOutput,
     ResumeSkillEntryOutput,
     SkillCategoryOutput,
@@ -13,6 +14,7 @@ from resume.interfaces.schemas import (
     BulletResponse,
     EducationResponse,
     ProjectResponse,
+    ResumeLinkResponse,
     ResumeResponse,
     ResumeSkillEntryResponse,
     SkillCategoryResponse,
@@ -27,9 +29,20 @@ def resume_to_response(dto: ResumeOutput) -> ResumeResponse:
         id=dto.id,
         user_id=dto.user_id,
         tagline=dto.tagline,
+        title=dto.title,
         is_active=dto.is_active,
         created_at=dto.created_at,
         updated_at=dto.updated_at,
+    )
+
+
+def resume_link_to_response(dto: ResumeLinkOutput) -> ResumeLinkResponse:
+    return ResumeLinkResponse(
+        id=dto.id,
+        resume_id=dto.resume_id,
+        label=dto.label,
+        url=dto.url,
+        sort_order=dto.sort_order,
     )
 
 

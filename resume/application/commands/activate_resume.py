@@ -20,6 +20,7 @@ class ActivateResume:
             id=resume.id,
             user_id=resume.user_id,
             tagline=resume.tagline,
+            title=resume.title,
             is_active=resume.is_active,
             created_at=resume.created_at,
             updated_at=resume.updated_at,

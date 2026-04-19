@@ -13,6 +13,7 @@ def _to_entity(m: ResumeModel) -> Resume:
         id=m.id,
         user_id=m.user_id,
         tagline=m.tagline,
+        title=m.title,
         is_active=m.is_active,
         created_at=m.created_at,
         updated_at=m.updated_at,
@@ -52,6 +53,7 @@ class SqlAlchemyResumeRepository(ResumeRepository):
         existing = await self._session.get(ResumeModel, resume.id)
         if existing:
             existing.tagline = resume.tagline
+            existing.title = resume.title
             existing.is_active = resume.is_active
             existing.updated_at = resume.updated_at
         else:
@@ -60,6 +62,7 @@ class SqlAlchemyResumeRepository(ResumeRepository):
                     id=resume.id,
                     user_id=resume.user_id,
                     tagline=resume.tagline,
+                    title=resume.title,
                     is_active=resume.is_active,
                     created_at=resume.created_at,
                     updated_at=resume.updated_at,

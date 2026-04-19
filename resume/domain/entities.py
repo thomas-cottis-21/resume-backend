@@ -12,9 +12,19 @@ class Resume:
     id: UUID
     user_id: UUID
     tagline: str | None
+    title: str | None
     is_active: bool
     created_at: datetime
     updated_at: datetime
+
+
+@dataclass
+class ResumeLink:
+    id: UUID
+    resume_id: UUID
+    label: str
+    url: str
+    sort_order: int
 
 
 @dataclass

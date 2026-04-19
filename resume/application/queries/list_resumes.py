@@ -10,6 +10,7 @@ def _to_output(r: Resume) -> ResumeOutput:
         id=r.id,
         user_id=r.user_id,
         tagline=r.tagline,
+        title=r.title,
         is_active=r.is_active,
         created_at=r.created_at,
         updated_at=r.updated_at,

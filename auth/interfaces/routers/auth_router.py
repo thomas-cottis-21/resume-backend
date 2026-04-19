@@ -5,9 +5,11 @@ from auth.application.commands.login_user import LoginUser, LoginUserInput
 from auth.application.commands.logout import Logout, LogoutInput
 from auth.application.commands.refresh_token import RefreshAccessToken, RefreshTokenInput
 from auth.application.commands.register_user import RegisterUser, RegisterUserInput
+from auth.domain.entities import User
 from auth.infrastructure.repositories.refresh_token_repository import SqlAlchemyRefreshTokenRepository
 from auth.infrastructure.repositories.user_repository import SqlAlchemyUserRepository
-from auth.interfaces.schemas import LoginRequest, RegisterRequest, TokenResponse
+from auth.interfaces.dependencies import get_current_user
+from auth.interfaces.schemas import LoginRequest, RegisterRequest, TokenResponse, UserResponse
 from core.config import settings
 from core.database.session import get_db_session
 from core.exceptions import AuthenticationError
@@ -86,3 +88,15 @@ async def logout(
         refresh_token_repo = SqlAlchemyRefreshTokenRepository(db)
         await Logout(refresh_token_repo).execute(LogoutInput(raw_refresh_token=raw_refresh_token))
     response.delete_cookie(_REFRESH_COOKIE)
+
+
+@router.get("/me", response_model=UserResponse)
+async def get_me(current_user: User = Depends(get_current_user)) -> UserResponse:
+    return UserResponse(
+        id=current_user.id,
+        email=current_user.email,
+        display_name=current_user.display_name,
+        bio=current_user.bio,
+        avatar_url=current_user.avatar_url,
+        roles=current_user.roles,
+    )

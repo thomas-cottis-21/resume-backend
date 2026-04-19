@@ -12,9 +12,19 @@ class ResumeOutput:
     id: UUID
     user_id: UUID
     tagline: str | None
+    title: str | None
     is_active: bool
     created_at: datetime
     updated_at: datetime
+
+
+@dataclass
+class ResumeLinkOutput:
+    id: UUID
+    resume_id: UUID
+    label: str
+    url: str
+    sort_order: int
 
 
 # ── Work Experience ───────────────────────────────────────────────────────────
