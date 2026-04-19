@@ -25,7 +25,6 @@ class PostCreateRequest(BaseModel):
     content: str
     cover_image_url: str | None = None
     reading_time_minutes: int | None = None
-    author_id: UUID
     tag_ids: list[UUID] = []
 
 

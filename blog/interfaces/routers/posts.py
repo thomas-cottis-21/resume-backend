@@ -2,6 +2,8 @@ from uuid import UUID
 
 from fastapi import APIRouter, Depends, status
 
+from auth.domain.entities import User
+from auth.interfaces.dependencies import get_current_user
 from blog.application.commands.create_post import CreatePost, CreatePostInput
 from blog.application.commands.delete_post import DeletePost, DeletePostInput
 from blog.application.commands.publish_post import PublishPost, PublishPostInput
@@ -56,6 +58,7 @@ async def get_post(
 @router.post("", response_model=PostResponse, status_code=status.HTTP_201_CREATED)
 async def create_post(
     body: PostCreateRequest,
+    current_user: User = Depends(get_current_user),
     use_case: CreatePost = Depends(get_create_post),
 ) -> PostResponse:
     result = await use_case.execute(
@@ -65,7 +68,7 @@ async def create_post(
             content=body.content,
             cover_image_url=body.cover_image_url,
             reading_time_minutes=body.reading_time_minutes,
-            author_id=body.author_id,
+            author_id=current_user.id,
             tags=body.tag_ids,
         )
     )
@@ -75,14 +78,14 @@ async def create_post(
 @router.patch("/{post_id}", response_model=PostResponse)
 async def update_post(
     post_id: UUID,
-    user_id: UUID,  # temporary query param until auth is implemented
     body: PostUpdateRequest,
+    current_user: User = Depends(get_current_user),
     use_case: UpdatePost = Depends(get_update_post),
 ) -> PostResponse:
     result = await use_case.execute(
         UpdatePostInput(
             post_id=post_id,
-            user_id=user_id,
+            user_id=current_user.id,
             title=body.title if body.title is not None else UNSET,
             excerpt=body.excerpt if "excerpt" in body.model_fields_set else UNSET,
             content=body.content if body.content is not None else UNSET,
@@ -97,17 +100,17 @@ async def update_post(
 @router.delete("/{post_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_post(
     post_id: UUID,
-    user_id: UUID,  # temporary query param until auth is implemented
+    current_user: User = Depends(get_current_user),
     use_case: DeletePost = Depends(get_delete_post),
 ) -> None:
-    await use_case.execute(DeletePostInput(post_id=post_id, user_id=user_id))
+    await use_case.execute(DeletePostInput(post_id=post_id, user_id=current_user.id))
 
 
 @router.post("/{post_id}/publish", response_model=PostResponse)
 async def publish_post(
     post_id: UUID,
-    user_id: UUID,  # temporary query param until auth is implemented
+    current_user: User = Depends(get_current_user),
     use_case: PublishPost = Depends(get_publish_post),
 ) -> PostResponse:
-    result = await use_case.execute(PublishPostInput(post_id=post_id, user_id=user_id))
+    result = await use_case.execute(PublishPostInput(post_id=post_id, user_id=current_user.id))
     return post_to_response(result)

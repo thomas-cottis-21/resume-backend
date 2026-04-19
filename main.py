@@ -2,10 +2,11 @@ from fastapi import FastAPI, Request, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
+from auth.interfaces.router import router as auth_router
 from blog.interfaces.router import blog_router
 from bucket_list.interfaces.router import bucket_list_router_root
 from core.config import settings
-from core.exceptions import ConflictError, NotFoundError, OwnershipError, ValidationError
+from core.exceptions import AuthenticationError, ConflictError, NotFoundError, OwnershipError, ValidationError
 from resume.interfaces.router import resume_router
 
 
@@ -41,6 +42,11 @@ def create_app() -> FastAPI:
     async def validation_handler(_: Request, exc: ValidationError) -> JSONResponse:
         return JSONResponse(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, content={"detail": str(exc)})
 
+    @app.exception_handler(AuthenticationError)
+    async def authentication_handler(_: Request, exc: AuthenticationError) -> JSONResponse:
+        return JSONResponse(status_code=status.HTTP_401_UNAUTHORIZED, content={"detail": str(exc)})
+
+    app.include_router(auth_router, prefix="/api/v1/auth")
     app.include_router(resume_router, prefix="/api/v1")
     app.include_router(bucket_list_router_root, prefix="/api/v1")
     app.include_router(blog_router, prefix="/api/v1")

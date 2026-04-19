@@ -2,6 +2,8 @@ from uuid import UUID
 
 from fastapi import APIRouter, Depends, status
 
+from auth.domain.entities import User
+from auth.interfaces.dependencies import get_current_user
 from bucket_list.application.commands.add_to_bucket_list import AddToBucketList, AddToBucketListInput
 from bucket_list.application.commands.remove_from_bucket_list import RemoveFromBucketList
 from bucket_list.application.commands.update_bucket_list_item import (
@@ -44,11 +46,12 @@ async def list_bucket_list_items(
 async def add_to_bucket_list(
     user_id: UUID,
     body: BucketListItemCreateRequest,
+    current_user: User = Depends(get_current_user),
     use_case: AddToBucketList = Depends(get_add_to_bucket_list),
 ) -> BucketListItemResponse:
     result = await use_case.execute(
         AddToBucketListInput(
-            user_id=user_id,
+            user_id=current_user.id,
             destination_id=body.destination_id,
             status_id=body.status_id,
             notes=body.notes,
@@ -72,6 +75,7 @@ async def update_bucket_list_item(
     user_id: UUID,
     item_id: UUID,
     body: BucketListItemUpdateRequest,
+    current_user: User = Depends(get_current_user),
     use_case: UpdateBucketListItem = Depends(get_update_bucket_list_item),
 ) -> BucketListItemResponse:
     result = await use_case.execute(
@@ -91,6 +95,7 @@ async def update_bucket_list_item(
 async def remove_from_bucket_list(
     user_id: UUID,
     item_id: UUID,
+    current_user: User = Depends(get_current_user),
     use_case: RemoveFromBucketList = Depends(get_remove_from_bucket_list),
 ) -> None:
     await use_case.execute(item_id)

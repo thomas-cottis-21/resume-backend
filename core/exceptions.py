@@ -16,3 +16,7 @@ class ValidationError(NomadaException):
 
 class OwnershipError(NomadaException):
     """Raised when a resource does not belong to the requesting user."""
+
+
+class AuthenticationError(NomadaException):
+    """Raised when a request cannot be authenticated (missing/invalid/expired token)."""

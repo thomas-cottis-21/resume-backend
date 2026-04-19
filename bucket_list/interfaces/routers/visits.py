@@ -2,6 +2,8 @@ from uuid import UUID
 
 from fastapi import APIRouter, Depends, status
 
+from auth.domain.entities import User
+from auth.interfaces.dependencies import get_current_user
 from bucket_list.application.commands.delete_visit import DeleteVisit
 from bucket_list.application.commands.log_visit import LogVisit, LogVisitInput
 from bucket_list.application.queries.get_visit import GetVisit
@@ -35,11 +37,12 @@ async def list_visits(
 async def log_visit(
     user_id: UUID,
     body: VisitCreateRequest,
+    current_user: User = Depends(get_current_user),
     use_case: LogVisit = Depends(get_log_visit),
 ) -> VisitResponse:
     result = await use_case.execute(
         LogVisitInput(
-            user_id=user_id,
+            user_id=current_user.id,
             destination_id=body.destination_id,
             visited_at=body.visited_at,
             notes=body.notes,
@@ -62,6 +65,7 @@ async def get_visit(
 async def delete_visit(
     user_id: UUID,
     visit_id: UUID,
+    current_user: User = Depends(get_current_user),
     use_case: DeleteVisit = Depends(get_delete_visit),
 ) -> None:
     await use_case.execute(visit_id)
