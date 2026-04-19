@@ -2,7 +2,7 @@ from urllib.parse import urlencode
 
 import httpx
 from fastapi import APIRouter, Depends, Request, Response, status
-from fastapi.responses import JSONResponse, RedirectResponse
+from fastapi.responses import RedirectResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from auth.application.commands.oauth_callback import OAuthCallback, OAuthCallbackInput
@@ -11,7 +11,6 @@ from auth.infrastructure.repositories.refresh_token_repository import SqlAlchemy
 from auth.infrastructure.repositories.user_repository import SqlAlchemyUserRepository
 from auth.infrastructure.security import generate_oauth_state, verify_oauth_state
 from auth.interfaces.routers.auth_router import _set_refresh_cookie
-from auth.interfaces.schemas import TokenResponse
 from core.config import settings
 from core.database.session import get_db_session
 from core.exceptions import AuthenticationError
@@ -39,14 +38,14 @@ async def google_authorize() -> RedirectResponse:
     return response
 
 
-@router.get("/google/callback", response_model=TokenResponse)
+@router.get("/google/callback")
 async def google_callback(
     request: Request,
     response: Response,
     code: str,
     state: str,
     db: AsyncSession = Depends(get_db_session),
-) -> JSONResponse:
+) -> RedirectResponse:
     # Validate state
     cookie_state = request.cookies.get("oauth_state")
     if not cookie_state or cookie_state != state or not verify_oauth_state(state, settings):
@@ -91,6 +90,10 @@ async def google_callback(
         )
     )
 
-    _set_refresh_cookie(response, result.refresh_token)
-    response.delete_cookie("oauth_state")
-    return JSONResponse(content=TokenResponse(access_token=result.access_token).model_dump())
+    redirect = RedirectResponse(
+        url=f"{settings.oauth_success_redirect}#access_token={result.access_token}",
+        status_code=status.HTTP_302_FOUND,
+    )
+    _set_refresh_cookie(redirect, result.refresh_token)
+    redirect.delete_cookie("oauth_state")
+    return redirect
